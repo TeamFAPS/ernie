@@ -15,3 +15,7 @@ ida loader by Socratic Bliss for the psp2 syscon from uss1002 motherboard
 
 ## rl78_proc_ida.rar
 rl78 processor plugins for ida 7.x made by f0f, precompiled by z80
+
+## vita_command_table_uss1001.py
+## vita_command_table_uss1002.py
+command table parser scripts for uss1001 and uss1002 motherboards
