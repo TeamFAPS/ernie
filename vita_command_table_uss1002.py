@@ -1,7 +1,7 @@
 #python2
 import struct
 
-with open("vita_sc_dump_uss1002.bin", "rb") as f:
+with open("USS-1002.bin", "rb") as f:
 	f.seek(0x3096)
 	print '{:<6} {:<5} {:<7}'.format("Number", "Flags", "Address")
 	for i in xrange(0, 73):
