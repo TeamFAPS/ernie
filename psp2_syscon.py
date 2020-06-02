@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 '''
+
 PS Vita Syscon Loader by SocraticBliss (R)
 Dedicated to zecoxao <3
 
@@ -65,7 +66,8 @@ def accept_file(f, n):
     
     try:
         if not isinstance(n, (int, long)) or n == 0:
-            return 'PS Vita - Syscon (R5F1ZCRK)' if f.read(4) == '\x00\xE0\x00\x00' else 0
+            f.seek(0xC0)
+            return 'PS Vita - Syscon (R5F1ZCRK)' if f.read(4) == '\x7F\xFF\xAA\x04' else 0
     
     except:
         pass
@@ -77,7 +79,7 @@ def load_file(f, neflags, format):
     
     # PS Vita Syscon Processor
     processor('rl78')
-    
+        
     # Boot Cluster 0
     print('# Creating Vector Table Area 0')
     segment(f, 0x0, 0x80, 'VTA0', 'CODE', SEGPERM_READ | SEGPERM_EXEC)
@@ -295,6 +297,23 @@ def load_file(f, neflags, format):
     for sfr in xrange(0xFF):
         ret = ida.create_data(0xFFF00 + sfr, FF_BYTE, 0x1, BADNODE)
         #print('0x%X : %i' % (0xF0000 + sfr, ret))
+    
+    # sc_cmd_entry - Find Command Table
+    
+    entry = idc.add_struc(BADADDR, 'sc_cmd_entry', False);
+    idc.add_struc_member(entry, 'cmd', 0x0, 0x10000400, BADADDR, 0x2)
+    idc.add_struc_member(entry, 'flags', 0x2, 0x10000400, BADADDR, 0x2)
+    idc.add_struc_member(entry, 'func', 0x4, 0x20500400, 0x0, 0x4, 0xFFFFFFFF, 0x0, 0x2)
+    
+    pa1 = ida.get_segm_by_name('PA1')
+    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '00 04 00 00 00 00 ?? ?? 03 00', 0x10, SEARCH_DOWN) + 0x2
+    #print('0x%X' % address)
+    
+    while ida.get_word(address) <= 0x2085:
+        ida.create_struct(address, 0x8, entry)
+        if ida.get_word(address) == 0x2085:
+            break
+        address += 0x8
     
     '''
     print('# Search Function Start')
