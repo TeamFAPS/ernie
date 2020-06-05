@@ -301,8 +301,8 @@ def load_file(f, neflags, format):
     # sc_cmd_entry - Find Command Table
     
     entry = idc.add_struc(BADADDR, 'sc_cmd_entry', False);
-    idc.add_struc_member(entry, 'cmd', 0x0, 0x10000400, BADADDR, 0x2)
-    idc.add_struc_member(entry, 'flags', 0x2, 0x10000400, BADADDR, 0x2)
+    idc.add_struc_member(entry, 'cmd',  0x0, 0x10000400, BADADDR, 0x2)
+    idc.add_struc_member(entry, 'flag', 0x2, 0x10000400, BADADDR, 0x2)
     idc.add_struc_member(entry, 'func', 0x4, 0x20500400, 0x0, 0x4, 0xFFFFFFFF, 0x0, 0x2)
     
     pa1 = ida.get_segm_by_name('PA1')
@@ -310,9 +310,34 @@ def load_file(f, neflags, format):
     #print('0x%X' % address)
     
     while ida.get_word(address) <= 0x2085:
+        command  = ida.get_word(address)
+        flags    = ida.get_word(address + 0x2)
+        function = ida.get_dword(address + 0x4)
+        
+        ida.set_name(function, 'cmd_0x%X_flags_0x%X' % (command, flags), SN_NOCHECK | SN_NOWARN | SN_FORCE)
         ida.create_struct(address, 0x8, entry)
         if ida.get_word(address) == 0x2085:
             break
+        address += 0x8
+        
+        
+    # sc_jig_cmd_entry - Find Jig Command Table
+    
+    entry = idc.add_struc(BADADDR, 'sc_jig_cmd_entry', False);
+    idc.add_struc_member(entry, 'id', 0x0, 0x10000400, BADADDR, 0x2)
+    idc.add_struc_member(entry, 'func',	0x2, 0x20500400, 0x0, 0x4, 0xFFFFFFFF, 0x0, 0x2)
+    idc.add_struc_member(entry, 'flags', 0x6, 0x10000400, BADADDR, 0x2)
+    
+    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '97 D5 00 01 ?? ?? 00 00 00 00', 0x10, SEARCH_DOWN) + 0x2
+    #print('0x%X' % address)
+      
+    while ida.get_word(address) <= 0x301:
+        command  = ida.get_word(address)
+        function = ida.get_dword(address + 0x2)
+        flags    = ida.get_word(address + 0x6)
+        
+        ida.set_name(function, 'jigkick_cmd_0x%X_flags_0x%X' % (command, flags), SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        ida.create_struct(address, 0x8, entry)
         address += 0x8
     
     '''
