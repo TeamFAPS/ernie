@@ -237,24 +237,24 @@ def load_file(f, neflags, format):
     segment(f, 0xF0000, 0xF0800, 'SFR2')
     
     SFR2 = [
-            (0xF0001, 'ADM2', 'A/D converter mode register 2'),
-            (0xF0011, 'ADUL', 'Conversion result comparison upper limit setting register'),
-            (0xF0012, 'ADLL', 'Conversion result comparison lower limit setting register'),
-            (0xF0013, 'ADTES', 'A/D test register'),
-            (0xF0030, 'PU0', 'Pull-up resistor option register 0'),
-            (0xF0031, 'PU1', 'Pull-up resistor option register 1'),
-            (0xF0033, 'PU3', 'Pull-up resistor option register 3'),
-            (0xF0034, 'PU4', 'Pull-up resistor option register 4'),
-            (0xF0035, 'PU5', 'Pull-up resistor option register 5'),
-            (0xF0036, 'PU6', 'Pull-up resistor option register 6'),
-            (0xF0037, 'PU7', 'Pull-up resistor option register 7'),
-            (0xF0038, 'PU8', 'Pull-up resistor option register 8'),
-            (0xF0039, 'PU9', 'Pull-up resistor option register 9'),
-            (0xF003A, 'PU10', 'Pull-up resistor option register 10'),
-            (0xF003B, 'PU11', 'Pull-up resistor option register 11'),
-            (0xF003C, 'PU12', 'Pull-up resistor option register 12'),
-            (0xF003E, 'PU14', 'Pull-up resistor option register 14'),
-           ]
+        (0xF0001, 'ADM2', 'A/D converter mode register 2'),
+        (0xF0011, 'ADUL', 'Conversion result comparison upper limit setting register'),
+        (0xF0012, 'ADLL', 'Conversion result comparison lower limit setting register'),
+        (0xF0013, 'ADTES', 'A/D test register'),
+        (0xF0030, 'PU0', 'Pull-up resistor option register 0'),
+        (0xF0031, 'PU1', 'Pull-up resistor option register 1'),
+        (0xF0033, 'PU3', 'Pull-up resistor option register 3'),
+        (0xF0034, 'PU4', 'Pull-up resistor option register 4'),
+        (0xF0035, 'PU5', 'Pull-up resistor option register 5'),
+        (0xF0036, 'PU6', 'Pull-up resistor option register 6'),
+        (0xF0037, 'PU7', 'Pull-up resistor option register 7'),
+        (0xF0038, 'PU8', 'Pull-up resistor option register 8'),
+        (0xF0039, 'PU9', 'Pull-up resistor option register 9'),
+        (0xF003A, 'PU10', 'Pull-up resistor option register 10'),
+        (0xF003B, 'PU11', 'Pull-up resistor option register 11'),
+        (0xF003C, 'PU12', 'Pull-up resistor option register 12'),
+        (0xF003E, 'PU14', 'Pull-up resistor option register 14'),
+    ]
     
     for (address, name, comment) in SFR2:
         ida.set_name(address, name, SN_NOCHECK | SN_NOWARN | SN_FORCE)
@@ -298,14 +298,27 @@ def load_file(f, neflags, format):
         ret = ida.create_data(0xFFF00 + sfr, FF_BYTE, 0x1, BADNODE)
         #print('0x%X : %i' % (0xF0000 + sfr, ret))
     
+    # --------------------------------------------------------------------------------------------------------
+    # Common
+    
+    pa1    = ida.get_segm_by_name('PA1')
+    res    = ida.get_segm_by_name('RES')
+    mirror = ida.get_segm_by_name('MIRROR')
+    
+    # --------------------------------------------------------------------------------------------------------
     # sc_cmd_entry - Find Command Table
     
-    entry = idc.add_struc(BADADDR, 'sc_cmd_entry', False);
+    COMMANDS = {
+        0x05   : 'Get_Hardware_Info',
+        0xD2   : 'SNVS_Read_Write',
+        0x1082 : 'NVS_Read',
+    }
+    
+    entry = idc.add_struc(BADADDR, 'sc_cmd_entry', False)
     idc.add_struc_member(entry, 'cmd',  0x0, 0x10000400, BADADDR, 0x2)
     idc.add_struc_member(entry, 'flag', 0x2, 0x10000400, BADADDR, 0x2)
     idc.add_struc_member(entry, 'func', 0x4, 0x20500400, 0x0, 0x4, 0xFFFFFFFF, 0x0, 0x2)
     
-    pa1 = ida.get_segm_by_name('PA1')
     address = ida.find_binary(pa1.start_ea, pa1.end_ea, '00 04 00 00 00 00 ?? ?? 03 00', 0x10, SEARCH_DOWN) + 0x2
     #print('0x%X' % address)
     
@@ -314,16 +327,17 @@ def load_file(f, neflags, format):
         flags    = ida.get_word(address + 0x2)
         function = ida.get_dword(address + 0x4)
         
-        ida.set_name(function, 'cmd_0x%X_flags_0x%X' % (command, flags), SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        command = COMMANDS.get(command, 'cmd_0x%X_flags_0x%X' % (command, flags))
+        ida.set_name(function, command, SN_NOCHECK | SN_NOWARN | SN_FORCE)
         ida.create_struct(address, 0x8, entry)
         if ida.get_word(address) == 0x2085:
             break
         address += 0x8
-        
-        
+    
+    # --------------------------------------------------------------------------------------------------------
     # sc_jig_cmd_entry - Find Jig Command Table
     
-    entry = idc.add_struc(BADADDR, 'sc_jig_cmd_entry', False);
+    entry = idc.add_struc(BADADDR, 'sc_jig_cmd_entry', False)
     idc.add_struc_member(entry, 'id', 0x0, 0x10000400, BADADDR, 0x2)
     idc.add_struc_member(entry, 'func',	0x2, 0x20500400, 0x0, 0x4, 0xFFFFFFFF, 0x0, 0x2)
     idc.add_struc_member(entry, 'flags', 0x6, 0x10000400, BADADDR, 0x2)
@@ -336,11 +350,230 @@ def load_file(f, neflags, format):
         function = ida.get_dword(address + 0x2)
         flags    = ida.get_word(address + 0x6)
         
-        ida.set_name(function, 'jigkick_cmd_0x%X_flags_0x%X' % (command, flags), SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        ida.set_name(function, 'jig_cmd_0x%X_flags_0x%X' % (command, flags), SN_NOCHECK | SN_NOWARN | SN_FORCE)
         ida.create_struct(address, 0x8, entry)
         address += 0x8
     
-    '''
+    # --------------------------------------------------------------------------------------------------------
+    # renesas_cmd_entry - Find Renesas Command Table
+    
+    COMMANDS = {
+        0x00 : 'Reset',
+        0x13 : 'Verify',
+        0x14 : 'OCD_Related',
+        0x20 : 'Chip_Erase',
+        0x22 : 'Block_Erase',
+        0x32 : 'Block_Blank_Check',
+        0x40 : 'Programming',
+        0x9A : 'Baud_Rate_Set',
+        0xA0 : 'Security_Set',
+        0xA1 : 'Security_Get',
+        0xA2 : 'Security_Release',
+        0xB0 : 'Checksum',
+        0xC0 : 'Silicon_Signature',
+        0xC5 : 'Version_Get',
+    }
+    
+    entry = idc.add_struc(BADADDR, 'renesas_cmd_entry', False)
+    idc.add_struc_member(entry, 'version',	0x0, 0x10000400, BADADDR, 0x2)
+    idc.add_struc_member(entry, 'ext_function_address', 0x2, 0x10000400, BADADDR, 0x32)
+    idc.add_struc_member(entry, 'ext_function_code', 0x34,	0x400, BADADDR, 0xC)
+    idc.add_struc_member(entry, 'unknown',	0x40, 0x400, BADADDR, 0x20)
+    idc.add_struc_member(entry, 'int_function_address', 0x60, 0x10000400, BADADDR, 0x10)
+    idc.add_struc_member(entry, 'int_function_code', 0x70,	0x400, BADADDR, 0x8)
+    idc.add_struc_member(entry, 'unknown2', 0x78, 0x400, BADADDR, 0x1A)
+    
+    address = ida.find_binary(res.start_ea, res.end_ea, '03 03', 0x10, SEARCH_DOWN) + 0x2
+    #print('0x%X' % address)
+    
+    ida.create_struct(address - 0x2, 0x92, entry)
+    
+    # --------------------------------------------------------------------------------------------------------
+    # External Functions
+    
+    ext_functions = []
+    while ida.get_word(address) != 0x1300:
+        ext_function = ida.get_word(address) + 0xE0000
+        #print('ext_function: 0x%X' % ext_function)
+        
+        ida.create_insn(ext_function)
+        if ida.print_insn_mnem(ext_function) != 'nop':
+            ida.add_func(ext_function, BADADDR)
+        
+        '''
+        print(ida.print_insn_mnem(ext_function + 0x3))
+        if ida.print_insn_mnem(ext_function + 0x3) == 'br':
+            ida.add_func(ext_function, ext_function + 0x5)
+        else:
+            ida.add_func(ext_function, BADADDR)
+        '''
+        
+        ext_functions.append(ext_function)
+        
+        address += 2
+    
+    # --------------------------------------------------------------------------------------------------------
+    # External Commands
+    
+    while ida.get_byte(address) != 0x3:
+        command = ida.get_byte(address)
+        #print('ext_function: 0x%X' % ext_functions[0])
+        
+        command = COMMANDS.get(command, 'renesas_ext_cmd_0x%X' % command)
+        ida.set_name(ext_functions[0], command, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        
+        ext_functions.pop(0)
+        
+        address += 0x1
+    
+    address += 0x20
+    #print('int_function_start: 0x%X' % address)
+    
+    # --------------------------------------------------------------------------------------------------------
+    # Internal Functions
+    
+    int_functions = []
+    while ida.get_word(address) != 0xCD0E:
+        int_function = ida.get_word(address) + 0xE0000
+        #print('int_function: 0x%X' % int_function)
+        
+        ida.create_insn(int_function)
+        if ida.print_insn_mnem(int_function) != 'nop':
+            ida.add_func(int_function, BADADDR)
+        
+        int_functions.append(int_function)
+        
+        address += 2
+    
+    # --------------------------------------------------------------------------------------------------------
+    # Internal Commands
+    
+    while ida.get_byte(address) != 0x87:
+        command = ida.get_byte(address)
+        #print('int_function: 0x%X' % int_functions[0])
+        
+        command = COMMANDS.get(command, 'renesas_int_cmd_0x%X' % command)
+        ida.set_name(int_functions[0], command, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        
+        int_functions.pop(0)
+        
+        address += 0x1
+    
+    # --------------------------------------------------------------------------------------------------------
+    # Signature Data
+
+    entry = idc.add_struc(BADADDR, 'signature_data', False)
+    idc.add_struc_member(entry, 'device_code', 0x0,	0x400, BADADDR, 0x3);
+    idc.add_struc_member(entry, 'device_name', 0x3,	0x5000c400,	0,	0xA);
+    idc.add_struc_member(entry, 'code_flash_mem_area_last_address',	0xD, 0x9400, BADADDR, 0x3);
+    idc.add_struc_member(entry, 'data_flash_mem_area_last_address', 0x10, 0x400, BADADDR, 0x3);
+    idc.add_struc_member(entry, 'firmware_version', 0x13, 0x400, BADADDR, 0x3);
+    
+    address = ida.find_binary(res.start_ea, res.end_ea, '10 00 06', 0x10, SEARCH_DOWN)
+    #print('0x%X' % address)
+    
+    ida.create_struct(address, 0x16, entry)
+    
+    # --------------------------------------------------------------------------------------------------------
+    # SP1 Command Keys
+    
+    KEYS = [
+        '0x39F6_KEY',
+        '0x39EE_KEY',
+        '0x39F2_KEY',
+        '0x3A04_KEY',
+        '0x39FC_KEY',
+        '0x3A00_KEY',
+        '0x3A12_KEY',
+        '0x3A0A_KEY',
+        '0x3A0E_KEY',
+    ]
+    
+    entry = idc.add_struc(BADADDR, 'key', False)
+    idc.add_struc_member(entry, 'key', 0, 0x400, BADADDR, 0x10)
+    
+    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '80 99 6F BB C8 B4 EB A3', 0x10, SEARCH_DOWN)
+    #print('key address: 0x%X' % address)
+    
+    ida.del_items(address, 0, 0x94)
+    
+    for count, key in enumerate(KEYS):
+        ida.create_data(address + (count * 0x10), FF_BYTE, 0x10, BADNODE)
+        ida.create_struct(address + (count * 0x10), 0x10, entry)
+        ida.set_name(address + (count * 0x10), key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+    
+    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '%02X %02X 00 00' % (address & 0xFF, ((address >> 0x8) & 0xFF)), 0x10, SEARCH_DOWN) - 0x8
+    #print('address: 0x%X' % address)
+    
+    ida.del_items(address, 0, 0x28)
+    
+    for key in xrange(3):
+        ida.create_data(address, FF_DWORD, 0x4, BADNODE)
+        ida.create_data(address + 0x4, FF_DWORD, 0x4, BADNODE)
+        ida.create_data(address + 0x8, FF_DWORD, 0x4, BADNODE)
+    
+        address += 0xE
+    
+    # --------------------------------------------------------------------------------------------------------
+    # SP1 AES/MISC Keys
+    
+    AESKEYS = [
+        'AES_KEY',
+        'AES_IV',
+        'XOR_KEY',
+        'SERVICE_0x900',
+    ]
+    
+    address = ida.find_binary(pa1.start_ea, pa1.end_ea, 'DB D9 45 0A CC A8 54 48', 0x10, SEARCH_DOWN)
+    #print('key address: 0x%X' % address)
+    
+    ida.del_items(address, 0, 0x40)
+    
+    for count, key in enumerate(AESKEYS):
+        ida.create_data(address + (count * 0x10), FF_BYTE, 0x10, BADNODE)
+        ida.create_struct(address + (count * 0x10), 0x10, entry)
+        ida.set_name(address + (count * 0x10), key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+    
+    # --------------------------------------------------------------------------------------------------------
+    # Mirror Command Keys
+    
+    KEYS = [
+        '0xF39F6_KEY',
+        '0xF39EE_KEY',
+        '0xF39F2_KEY',
+        '0xF3A04_KEY',
+        '0xF39FC_KEY',
+        '0xF3A00_KEY',
+        '0xF3A12_KEY',
+        '0xF3A0A_KEY',
+        '0xF3A0E_KEY',
+    ]    
+    
+    address = ida.find_binary(mirror.start_ea, mirror.end_ea, '80 99 6F BB C8 B4 EB A3', 0x10, SEARCH_DOWN)
+    #print('key address: 0x%X' % address)
+    
+    ida.del_items(address, 0, 0x94)
+    
+    for count, key in enumerate(KEYS):
+        ida.create_data(address + (count * 0x10), FF_BYTE, 0x10, BADNODE)
+        ida.create_struct(address + (count * 0x10), 0x10, entry)
+        ida.set_name(address + (count * 0x10), key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+    
+    address = ida.find_binary(mirror.start_ea, mirror.end_ea, '%02X %02X 00 00' % (address & 0xFF, ((address >> 0x8) & 0xFF)), 0x10, SEARCH_DOWN) - 0x8
+    #print('address: 0x%X' % address)
+    
+    ida.del_items(address, 0, 0x28)
+    
+    for key in xrange(3):
+        ida.create_data(address, FF_DWORD, 0x4, BADNODE)
+        ida.create_data(address + 0x4, FF_DWORD, 0x4, BADNODE)
+        ida.create_data(address + 0x8, FF_DWORD, 0x4, BADNODE)
+    
+        address += 0xE    
+    
+    # --------------------------------------------------------------------------------------------------------
+    
+    
     print('# Search Function Start')
     function_search(1, 'D7 61 DD')
     function_search(1, 'FF C3 31 17')
@@ -359,7 +592,9 @@ def load_file(f, neflags, format):
     function_search(1, '00 C7 C3 C1 FB')
     function_search(1, 'FF C7 57')
     function_search(2, '00 00 C7 C5 C1')
-    '''
+    
+    
+    # --------------------------------------------------------------------------------------------------------
     
     print('# Done!')
     return 1
