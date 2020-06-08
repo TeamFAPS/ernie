@@ -50,7 +50,8 @@ def function_search(mode, search, address = 0):
 def segment(f, start, end, name, type = 'DATA', perm = SEGPERM_MAXVAL):
 
     f.file2base(start, start, end, FILEREG_PATCHABLE)
-    ida.add_segm(0x0, start, end, name, type, 0x0)
+    flags = ADDSEG_NOAA if 'SFR' in name else 0x0
+    ida.add_segm(0x0, start, end, name, type, flags)
     
     # Processor Specific Segment Details
     idc.set_segm_addressing(start, 0x1)
@@ -237,32 +238,54 @@ def load_file(f, neflags, format):
     segment(f, 0xF0000, 0xF0800, 'SFR2')
     
     SFR2 = [
-        (0xF0001, 'ADM2', 'A/D converter mode register 2'),
-        (0xF0011, 'ADUL', 'Conversion result comparison upper limit setting register'),
-        (0xF0012, 'ADLL', 'Conversion result comparison lower limit setting register'),
-        (0xF0013, 'ADTES', 'A/D test register'),
-        (0xF0030, 'PU0', 'Pull-up resistor option register 0'),
-        (0xF0031, 'PU1', 'Pull-up resistor option register 1'),
-        (0xF0033, 'PU3', 'Pull-up resistor option register 3'),
-        (0xF0034, 'PU4', 'Pull-up resistor option register 4'),
-        (0xF0035, 'PU5', 'Pull-up resistor option register 5'),
-        (0xF0036, 'PU6', 'Pull-up resistor option register 6'),
-        (0xF0037, 'PU7', 'Pull-up resistor option register 7'),
-        (0xF0038, 'PU8', 'Pull-up resistor option register 8'),
-        (0xF0039, 'PU9', 'Pull-up resistor option register 9'),
-        (0xF003A, 'PU10', 'Pull-up resistor option register 10'),
-        (0xF003B, 'PU11', 'Pull-up resistor option register 11'),
-        (0xF003C, 'PU12', 'Pull-up resistor option register 12'),
-        (0xF003E, 'PU14', 'Pull-up resistor option register 14'),
+        (0xF0001, 0x1, 'ADM2', 'A/D converter mode register 2'),
+        (0xF0011, 0x1, 'ADUL', 'Conversion result comparison upper limit setting register'),
+        (0xF0012, 0x1, 'ADLL', 'Conversion result comparison lower limit setting register'),
+        (0xF0013, 0x1, 'ADTES', 'A/D test register'),
+        (0xF0030, 0x1, 'PU0', 'Pull-up resistor option register 0'),
+        (0xF0031, 0x1, 'PU1', 'Pull-up resistor option register 1'),
+        (0xF0033, 0x1, 'PU3', 'Pull-up resistor option register 3'),
+        (0xF0034, 0x1, 'PU4', 'Pull-up resistor option register 4'),
+        (0xF0035, 0x1, 'PU5', 'Pull-up resistor option register 5'),
+        (0xF0036, 0x1, 'PU6', 'Pull-up resistor option register 6'),
+        (0xF0037, 0x1, 'PU7', 'Pull-up resistor option register 7'),
+        (0xF0038, 0x1, 'PU8', 'Pull-up resistor option register 8'),
+        (0xF0039, 0x1, 'PU9', 'Pull-up resistor option register 9'),
+        (0xF003A, 0x1, 'PU10', 'Pull-up resistor option register 10'),
+        (0xF003B, 0x1, 'PU11', 'Pull-up resistor option register 11'),
+        (0xF003C, 0x1, 'PU12', 'Pull-up resistor option register 12'),
+        (0xF003E, 0x1, 'PU14', 'Pull-up resistor option register 14'),
+        (0xF0040, 0x1, 'PIM0', 'Port input mode register 0'),
+        (0xF0041, 0x1, 'PIM1', 'Port input mode register 1'),
+        (0xF0044, 0x1, 'PIM4', 'Port input mode register 4'),
+        (0xF0045, 0x1, 'PIM5', 'Port input mode register 5'),
+        (0xF0048, 0x1, 'PIM8', 'Port input mode register 8'),
+        (0xF004E, 0x1, 'PIM14', 'Port input mode register 14'),
+        (0xF0050, 0x1, 'POM0', 'Port output mode register 0'),
+        (0xF0051, 0x1, 'POM1', 'Port output mode register 1'),
+        (0xF0054, 0x1, 'POM4', 'Port output mode register 4'),
+        (0xF0055, 0x1, 'POM5', 'Port output mode register 5'),
+        (0xF0057, 0x1, 'POM7', 'Port output mode register 7'),
+        (0xF0058, 0x1, 'POM8', 'Port output mode register 8'),
+        (0xF0059, 0x1, 'POM9', 'Port output mode register 9'),
+        (0xF005E, 0x1, 'POM14', 'Port output mode register 14'),
+        (0xF0060, 0x1, 'PMC0', 'Port mode control register 0'),
+        (0xF0063, 0x1, 'PMC3', 'Port mode control register 3'),
+        (0xF006A, 0x1, 'PMC10', 'Port mode control register 10'),
+        (0xF006B, 0x1, 'PMC11', 'Port mode control register 11'),
+        (0xF006C, 0x1, 'PMC12', 'Port mode control register 12'),
+        (0xF006E, 0x1, 'PMC14', 'Port mode control register 14'),
+        (0xF0070, 0x1, 'NFEN0', 'Noise filter enable register 0'),
+        (0xF0071, 0x1, 'NFEN1', 'Noise filter enable register 1'),
+        (0xF0072, 0x1, 'NFEN2', 'Noise filter enable register 2'),
+        (0xF0073, 0x1, 'ISC', 'Input switch control register'),
     ]
     
-    for (address, name, comment) in SFR2:
+    for (address, size, name, comment) in SFR2:
+        flags = ida.get_flags_by_size(size)
+        ida.create_data(address, flags, size, BADNODE)
         ida.set_name(address, name, SN_NOCHECK | SN_NOWARN | SN_FORCE)
         ida.set_cmt(address, comment, False)
-    
-    for sfr in xrange(0x800):
-        ret = ida.create_data(0xF0000 + sfr, FF_BYTE, 0x1, BADNODE)
-        #print('0x%X : %i' % (0xF0000 + sfr, ret))
     
     # Reserved 2
     print('# Creating Reserved 2')
@@ -294,9 +317,141 @@ def load_file(f, neflags, format):
     print('# Creating Special Function Register')
     segment(f, 0xFFF00, 0xFFFFF, 'SFR')
     
-    for sfr in xrange(0xFF):
-        ret = ida.create_data(0xFFF00 + sfr, FF_BYTE, 0x1, BADNODE)
-        #print('0x%X : %i' % (0xF0000 + sfr, ret))
+    SFR = [
+        (0xFFF00, 0x1, 'P0', 'Port register 0'),
+        (0xFFF01, 0x1, 'P1', 'Port register 1'),
+        (0xFFF02, 0x1, 'P2', 'Port register 2'),
+        (0xFFF03, 0x1, 'P3', 'Port register 3'),
+        (0xFFF04, 0x1, 'P4', 'Port register 4'),
+        (0xFFF05, 0x1, 'P5', 'Port register 5'),
+        (0xFFF06, 0x1, 'P6', 'Port register 6'),
+        (0xFFF07, 0x1, 'P7', 'Port register 7'),
+        (0xFFF08, 0x1, 'P8', 'Port register 8'),
+        (0xFFF09, 0x1, 'P9', 'Port register 9'),
+        (0xFFF0A, 0x1, 'P10', 'Port register 10'),
+        (0xFFF0B, 0x1, 'P11', 'Port register 11'),
+        (0xFFF0C, 0x1, 'P12', 'Port register 12'),
+        (0xFFF0D, 0x1, 'P13', 'Port register 13'),
+        (0xFFF0E, 0x1, 'P14', 'Port register 14'),
+        (0xFFF0F, 0x1, 'P15', 'Port register 15'),
+        (0xFFF10, 0x2, 'SDR00', 'Serial data register 00'),
+        (0xFFF12, 0x2, 'SDR01', 'Serial data register 01'),
+        (0xFFF14, 0x2, 'SDR12', 'Serial data register 12'),
+        (0xFFF16, 0x2, 'SDR13', 'Serial data register 13'),
+        (0xFFF18, 0x2, 'TDR00', 'Timer data register 00'),
+        (0xFFF1A, 0x2, 'TDR01', 'Timer data register 01'),        
+        (0xFFF1E, 0x2, 'ADCR', '10-bit A/D conversion result register'),
+        (0xFFF20, 0x1, 'PM0', 'Port mode register 0'),
+        (0xFFF21, 0x1, 'PM1', 'Port mode register 1'),
+        (0xFFF22, 0x1, 'PM2', 'Port mode register 2'),
+        (0xFFF23, 0x1, 'PM3', 'Port mode register 3'),
+        (0xFFF24, 0x1, 'PM4', 'Port mode register 4'),
+        (0xFFF25, 0x1, 'PM5', 'Port mode register 5'),
+        (0xFFF26, 0x1, 'PM6', 'Port mode register 6'),
+        (0xFFF27, 0x1, 'PM7', 'Port mode register 7'),
+        (0xFFF28, 0x1, 'PM8', 'Port mode register 8'),
+        (0xFFF29, 0x1, 'PM9', 'Port mode register 9'),
+        (0xFFF2A, 0x1, 'PM10', 'Port mode register 10'),
+        (0xFFF2B, 0x1, 'PM11', 'Port mode register 11'),
+        (0xFFF2C, 0x1, 'PM12', 'Port mode register 12'),
+        (0xFFF2E, 0x1, 'PM14', 'Port mode register 14'),
+        (0xFFF2F, 0x1, 'PM15', 'Port mode register 15'),
+        (0xFFF30, 0x1, 'ADM0', 'A/D converter mode register 0'),
+        (0xFFF31, 0x1, 'ADS', 'Analog input channel specification register'),
+        (0xFFF32, 0x1, 'ADM1', 'A/D converter mode register 1'),
+        (0xFFF37, 0x1, 'KRM', 'Key return mode register'),
+        (0xFFF38, 0x1, 'EGP0', 'External interrupt rising edge enable register 0'),
+        (0xFFF39, 0x1, 'EGN0', 'External interrupt falling edge enable register 0'),
+        (0xFFF3A, 0x1, 'EGP1', 'External interrupt rising edge enable register 1'),
+        (0xFFF3B, 0x1, 'EGN1', 'External interrupt falling edge enable register 1'),
+        (0xFFF44, 0x2, 'SDR02', 'Serial data register 02'),
+        (0xFFF46, 0x2, 'SDR03', 'Serial data register 03'),
+        (0xFFF48, 0x2, 'SDR10', 'Serial data register 10'),
+        (0xFFF4A, 0x2, 'SDR11', 'Serial data register 11'),
+        (0xFFF50, 0x1, 'IICA0', 'IICA shift register 0'),
+        (0xFFF51, 0x1, 'IICS0', 'IICA status register 0'),
+        (0xFFF52, 0x1, 'IICF0', 'IICA flag register 0'),
+        (0xFFF54, 0x1, 'IICA1', 'IICA shift register 1'),
+        (0xFFF55, 0x1, 'IICS1', 'IICA status register 1'),
+        (0xFFF56, 0x1, 'IICF1', 'IICA flag register 1'),
+        (0xFFF64, 0x2, 'TDR02', 'Timer data register 02'),
+        (0xFFF66, 0x2, 'TDR03', 'Timer data register 03'),
+        (0xFFF68, 0x2, 'TDR04', 'Timer data register 04'),
+        (0xFFF6A, 0x2, 'TDR05', 'Timer data register 05'),
+        (0xFFF6C, 0x2, 'TDR06', 'Timer data register 06'),
+        (0xFFF6E, 0x2, 'TDR07', 'Timer data register 07'),
+        (0xFFF70, 0x2, 'TDR10', 'Timer data register 10'),
+        (0xFFF72, 0x2, 'TDR11', 'Timer data register 11'),
+        (0xFFF74, 0x2, 'TDR12', 'Timer data register 12'),
+        (0xFFF76, 0x2, 'TDR13', 'Timer data register 13'),
+        (0xFFF78, 0x2, 'TDR14', 'Timer data register 14'),
+        (0xFFF7A, 0x2, 'TDR15', 'Timer data register 15'),
+        (0xFFF7C, 0x2, 'TDR16', 'Timer data register 16'),
+        (0xFFF7E, 0x2, 'TDR17', 'Timer data register 17'),
+        (0xFFF90, 0x2, 'ITMC', 'Interval timer control register'),
+        (0xFFF92, 0x1, 'SEC', 'Second count register'),
+        (0xFFF93, 0x1, 'MIN', 'Minute count register'),
+        (0xFFF94, 0x1, 'HOUR', 'Hour count register'),
+        (0xFFF95, 0x1, 'WEEK', 'Week count register'),
+        (0xFFF96, 0x1, 'DAY', 'Day count register'),
+        (0xFFF97, 0x1, 'MONTH', 'Month count register'),
+        (0xFFF98, 0x1, 'YEAR', 'Year count register'),
+        (0xFFF99, 0x1, 'SUBCUD', 'Watch error correction register'),
+        (0xFFF9A, 0x1, 'ALARMWM', 'Alarm minute register'),
+        (0xFFF9B, 0x1, 'ALARMWH', 'Alarm hour register'),
+        (0xFFF9C, 0x1, 'ALARMWW', 'Alarm week register'),
+        (0xFFF9D, 0x1, 'RTCC0', 'Real-time clock control register 0'),
+        (0xFFF9E, 0x1, 'RTCC1', 'Real-time clock control register 1'),
+        (0xFFFA0, 0x1, 'CMC', 'Clock operation mode control register'),
+        (0xFFFA1, 0x1, 'CSC', 'Clock operation status control register'),
+        (0xFFFA2, 0x1, 'OSTC', 'Oscillation stabilization time counter status register'),
+        (0xFFFA3, 0x1, 'OSTS', 'Oscillation stabilization time select register'),
+        (0xFFFA4, 0x1, 'CKC', 'System clock control register'),
+        (0xFFFA5, 0x1, 'CKS0', 'Clock output select register 0'),
+        (0xFFFA6, 0x1, 'CKS1', 'Clock output select register 1'),
+        (0xFFFA8, 0x1, 'RESF', 'Reset control flag register'),
+        (0xFFFA9, 0x1, 'LVIM', 'Voltage detection register'),
+        (0xFFFAA, 0x1, 'LVIS', 'Voltage detection level register'),
+        (0xFFFAB, 0x1, 'WDTE', 'Watchdog timer enable register'),
+        (0xFFFAC, 0x1, 'CRCIN', 'CRC input register'),
+        (0xFFFB0, 0x1, 'DSA0', 'DMA SFR address register 0'),
+        (0xFFFB1, 0x1, 'DSA1', 'DMA SFR address register 1'),
+        (0xFFFB2, 0x2, 'DRA0', 'DMA RAM address register 0'),
+        (0xFFFB4, 0x2, 'DRA1', 'DMA RAM address register 1'),
+        (0xFFFB6, 0x2, 'DBC0', 'DMA byte count register 0'),
+        (0xFFFB8, 0x2, 'DBC1', 'DMA byte count register 1'),
+        (0xFFFBA, 0x1, 'DMC0', 'DMA mode control register 0'),
+        (0xFFFBB, 0x1, 'DMC1', 'DMA mode control register 1'),
+        (0xFFFBC, 0x1, 'DRC0', 'DMA operation control register 0'),
+        (0xFFFBD, 0x1, 'DRC1', 'DMA operation control register 1'),
+        (0xFFFD0, 0x2, 'IF2', 'Interrupt request flag register 2'),
+        (0xFFFD2, 0x2, 'IF3', 'Interrupt request flag register 3'),
+        (0xFFFD4, 0x2, 'MK2', 'Interrupt mask flag register 2'),
+        (0xFFFD6, 0x2, 'MK3', 'Interrupt mask flag register 3'),
+        (0xFFFD8, 0x2, 'PR02', 'Priority specification flag register 02'),
+        (0xFFFDA, 0x2, 'PR03', 'Priority specification flag register 03'),
+        (0xFFFDC, 0x2, 'PR12', 'Priority specification flag register 12'),
+        (0xFFFDE, 0x2, 'PR13', 'Priority specification flag register 13'),
+        (0xFFFE0, 0x2, 'IF0', 'Interrupt request flag register 0'),
+        (0xFFFE2, 0x2, 'IF1', 'Interrupt request flag register 1'),
+        (0xFFFE4, 0x2, 'MK0', 'Interrupt mask flag register 0'),
+        (0xFFFE6, 0x2, 'MK1', 'Interrupt mask flag register 1'),
+        (0xFFFE8, 0x2, 'PR00', 'Priority specification flag register 00'),
+        (0xFFFEA, 0x2, 'PR01', 'Priority specification flag register 01'),
+        (0xFFFEC, 0x2, 'PR10', 'Priority specification flag register 10'),
+        (0xFFFEE, 0x2, 'PR11', 'Priority specification flag register 11'),
+        (0xFFFF0, 0x2, 'MDAL', 'Multiplication/division data register A (L)'),
+        (0xFFFF2, 0x2, 'MDAH', 'Multiplication/division data register A (H)'),
+        (0xFFFF4, 0x2, 'MDBH', 'Multiplication/division data register B (H)'),
+        (0xFFFF6, 0x2, 'MDBL', 'Multiplication/division data register B (L)'),
+        (0xFFFFE, 0x1, 'PMC', 'Processor mode control register'),
+    ]
+    
+    for (address, size, name, comment) in SFR:
+        flags = ida.get_flags_by_size(size)
+        ida.create_data(address, flags, size, BADNODE)
+        ida.set_name(address, name, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        ida.set_cmt(address, comment, False)
     
     # --------------------------------------------------------------------------------------------------------
     # Common
@@ -323,7 +478,7 @@ def load_file(f, neflags, format):
     # PA1 sc_cmd_entry    
     
     address = ida.find_binary(pa1.start_ea, pa1.end_ea, '00 04 00 00 00 00 ?? ?? 03 00', 0x10, SEARCH_DOWN) + 0x2
-    #print('0x%X' % address)
+    #print('address: 0x%X' % address)
     
     while True:
         command  = ida.get_word(address)
@@ -341,7 +496,7 @@ def load_file(f, neflags, format):
     # Mirror sc_cmd_entry
         
     address = ida.find_binary(mirror.start_ea, mirror.end_ea, '00 04 00 00 00 00 ?? ?? 03 00', 0x10, SEARCH_DOWN) + 0x2
-    #print('0x%X' % address)
+    #print('address: 0x%X' % address)
     
     while True:
         ida.create_struct(address, 0x8, entry)
@@ -361,7 +516,7 @@ def load_file(f, neflags, format):
     # PA1 sc_ext_cmd_entry
     
     address = ida.find_binary(pa1.start_ea, pa1.end_ea, '97 D5 00 01 ?? ?? 00 00 00 00', 0x10, SEARCH_DOWN) + 0x2
-    #print('0x%X' % address)
+    #print('address: 0x%X' % address)
       
     while True:
         command  = ida.get_word(address)
@@ -378,7 +533,7 @@ def load_file(f, neflags, format):
     # Mirror sc_ext_cmd_entry
     
     address = ida.find_binary(mirror.start_ea, mirror.end_ea, '97 D5 00 01 ?? ?? 00 00 00 00', 0x10, SEARCH_DOWN) + 0x2
-    #print('0x%X' % address)
+    #print('address: 0x%X' % address)
       
     while True:
         ida.create_struct(address, 0x8, entry)
@@ -390,7 +545,7 @@ def load_file(f, neflags, format):
     # sc_ext_cmd_entry - Find External Command Table 2  
     
     address = ida.find_binary(pa1.start_ea, pa1.end_ea, '97 D5 00 01 ?? ?? 01', 0x10, SEARCH_DOWN) + 0x2
-    #print('0x%X' % address)
+    #print('address: 0x%X' % address)
 
     while True:
         command  = ida.get_word(address)
@@ -519,7 +674,7 @@ def load_file(f, neflags, format):
     idc.add_struc_member(entry, 'firmware_version', 0x13, 0x400, BADADDR, 0x3);
     
     address = ida.find_binary(res.start_ea, res.end_ea, '10 00 06', 0x10, SEARCH_DOWN)
-    #print('0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.create_struct(address, 0x16, entry)
     
@@ -541,7 +696,7 @@ def load_file(f, neflags, format):
     idc.add_struc_member(entry, 'key', 0, 0x400, BADADDR, 0x10)    
     
     address = ida.find_binary(pa1.start_ea, pa1.end_ea, 'CF 2E 93 E9 F9 4E 28 CC', 0x10, SEARCH_DOWN)
-    #print('key address: 0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0x80)
     
@@ -567,7 +722,7 @@ def load_file(f, neflags, format):
     
     address = ida.find_binary(pa1.start_ea, pa1.end_ea, '80 99 6F BB C8 B4 EB A3', 0x10, SEARCH_DOWN)
     shared = address
-    #print('key address: 0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0x90)
     
@@ -580,7 +735,7 @@ def load_file(f, neflags, format):
     # SP1 g_debug_challenge_key
     
     address += 0x90
-    #print('key address: 0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0x20)
     
@@ -588,10 +743,10 @@ def load_file(f, neflags, format):
     ida.set_name(address, 'g_debug_challenge_key', SN_NOCHECK | SN_NOWARN | SN_FORCE)
     
     # --------------------------------------------------------------------------------------------------------
-    # SP1 jigkick_expansion Keys
+    # SP1 jigkick_expansion
     
     address += 0x20
-    #print('key address: 0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0xE0)
     
@@ -676,7 +831,7 @@ def load_file(f, neflags, format):
     ]
     
     address = ida.find_binary(pa1.start_ea, pa1.end_ea, 'DB D9 45 0A CC A8 54 48', 0x10, SEARCH_DOWN)
-    #print('key address: 0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0x30)
     
@@ -686,10 +841,10 @@ def load_file(f, neflags, format):
         ida.set_name(address + (count * 0x10), key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
     
     # --------------------------------------------------------------------------------------------------------
-    # PA1 SERVICE_0x900_DATA Key
+    # PA1 SERVICE_0x900_DATA
     
     address = ida.find_binary(pa1.start_ea, pa1.end_ea, '93 CE 8E BE DF 7F 69 A9', 0x10, SEARCH_DOWN)
-    #print('key address: 0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0x10)
     ida.create_data(address, FF_BYTE, 0x10, BADNODE)
@@ -721,7 +876,7 @@ def load_file(f, neflags, format):
     ]
     
     address = ida.find_binary(mirror.start_ea, mirror.end_ea, 'CF 2E 93 E9 F9 4E 28 CC', 0x10, SEARCH_DOWN)
-    #print('key address: 0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0x80)
     
@@ -747,7 +902,7 @@ def load_file(f, neflags, format):
     
     address = ida.find_binary(mirror.start_ea, mirror.end_ea, '80 99 6F BB C8 B4 EB A3', 0x10, SEARCH_DOWN)
     shared = address
-    #print('key address: 0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0x90)
     
@@ -760,7 +915,7 @@ def load_file(f, neflags, format):
     # Mirror g_debug_challenge_key
     
     address += 0x90
-    #print('key address: 0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0x20)
     
@@ -768,10 +923,10 @@ def load_file(f, neflags, format):
     ida.set_name(address, '_g_debug_challenge_key', SN_NOCHECK | SN_NOWARN | SN_FORCE)
     
     # --------------------------------------------------------------------------------------------------------
-    # Mirror jigkick_expansion Keys
+    # Mirror jigkick_expansion
     
     address += 0x20
-    #print('key address: 0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0xE0)
     
@@ -781,7 +936,7 @@ def load_file(f, neflags, format):
         ida.set_name(address + (key * 0x10), '_jigkick_expansion_%X' % key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
     
     # --------------------------------------------------------------------------------------------------------
-    # Mirror Unknown Shared Keys    
+    # Mirror Unknown Shared Keys  
     
     KEYS = [
         '_SharedKey_0',
@@ -847,10 +1002,10 @@ def load_file(f, neflags, format):
         address += 0xE
     
     # --------------------------------------------------------------------------------------------------------
-    # Mirror SERVICE_0x900_DATA Key
+    # Mirror SERVICE_0x900_DATA
     
     address = ida.find_binary(mirror.start_ea, mirror.end_ea, '93 CE 8E BE DF 7F 69 A9', 0x10, SEARCH_DOWN)
-    #print('key address: 0x%X' % address)
+    #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0x10)
     ida.create_data(address, FF_BYTE, 0x10, BADNODE)
@@ -859,7 +1014,7 @@ def load_file(f, neflags, format):
     
     # --------------------------------------------------------------------------------------------------------
     
-    
+    '''
     print('# Search Function Start')
     function_search(1, 'D7 61 DD')
     function_search(1, 'FF C3 31 17')
@@ -878,7 +1033,7 @@ def load_file(f, neflags, format):
     function_search(1, '00 C7 C3 C1 FB')
     function_search(1, 'FF C7 57')
     function_search(2, '00 00 C7 C5 C1')
-    
+    '''
     
     # --------------------------------------------------------------------------------------------------------
     
