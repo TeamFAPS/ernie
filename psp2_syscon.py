@@ -1014,7 +1014,7 @@ def load_file(f, neflags, format):
     
     # --------------------------------------------------------------------------------------------------------
     
-    '''
+
     print('# Search Function Start')
     function_search(1, 'D7 61 DD')
     function_search(1, 'FF C3 31 17')
@@ -1033,7 +1033,6 @@ def load_file(f, neflags, format):
     function_search(1, '00 C7 C3 C1 FB')
     function_search(1, 'FF C7 57')
     function_search(2, '00 00 C7 C5 C1')
-    '''
     
     # --------------------------------------------------------------------------------------------------------
     
