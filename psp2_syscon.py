@@ -476,8 +476,10 @@ def load_file(f, neflags, format):
     
     # --------------------------------------------------------------------------------------------------------
     # PA1 sc_cmd_entry    
+    # USS1001 - 0x26BE
+    # USS1002 - 0x3096
     
-    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '00 04 00 00 00 00 ?? ?? 03 00', 0x10, SEARCH_DOWN) + 0x2
+    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '00 00 00 00 ?? ?? 03 00 01 00', 0x10, SEARCH_DOWN)
     #print('address: 0x%X' % address)
     
     while True:
@@ -494,15 +496,18 @@ def load_file(f, neflags, format):
     
     # --------------------------------------------------------------------------------------------------------
     # Mirror sc_cmd_entry
-        
-    address = ida.find_binary(mirror.start_ea, mirror.end_ea, '00 04 00 00 00 00 ?? ?? 03 00', 0x10, SEARCH_DOWN) + 0x2
+    # USS1001 - None
+    # USS1002 - 0xF3096
+    
+    address = ida.find_binary(mirror.start_ea, mirror.end_ea, '00 00 00 00 ?? ?? 03 00 01 00', 0x10, SEARCH_DOWN)
     #print('address: 0x%X' % address)
     
-    while True:
-        ida.create_struct(address, 0x8, entry)
-        if ida.get_word(address) == 0x2085:
-            break
-        address += 0x8
+    if address != BADADDR:
+        while True:
+            ida.create_struct(address, 0x8, entry)
+            if ida.get_word(address) == 0x2085:
+                break
+            address += 0x8
     
     # --------------------------------------------------------------------------------------------------------
     # sc_ext_cmd_entry - Find External Command Table
@@ -514,10 +519,12 @@ def load_file(f, neflags, format):
     
     # --------------------------------------------------------------------------------------------------------
     # PA1 sc_ext_cmd_entry
+    # USS1001 - 0x2D02
+    # USS1002 - 0x3922
     
-    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '97 D5 00 01 ?? ?? 00 00 00 00', 0x10, SEARCH_DOWN) + 0x2
+    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '00 01 ?? ?? 00 00 00 00 01 01', 0x10, SEARCH_DOWN)
     #print('address: 0x%X' % address)
-      
+    
     while True:
         command  = ida.get_word(address)
         function = ida.get_dword(address + 0x2)
@@ -528,35 +535,60 @@ def load_file(f, neflags, format):
         if ida.get_word(address) == 0x301:
             break
         address += 0x8
-        
-    # --------------------------------------------------------------------------------------------------------
+    
+    # -------------------------------------------------------------------------------------------------------
     # Mirror sc_ext_cmd_entry
+    # USS1001 - None
+    # USS1002 - 0xF3922
     
-    address = ida.find_binary(mirror.start_ea, mirror.end_ea, '97 D5 00 01 ?? ?? 00 00 00 00', 0x10, SEARCH_DOWN) + 0x2
+    address = ida.find_binary(mirror.start_ea, mirror.end_ea, '00 01 ?? ?? 00 00 00 00 01 01', 0x10, SEARCH_DOWN)
     #print('address: 0x%X' % address)
-      
-    while True:
-        ida.create_struct(address, 0x8, entry)
-        if ida.get_word(address) == 0x301:
-            break
-        address += 0x8
     
-    # --------------------------------------------------------------------------------------------------------
-    # sc_ext_cmd_entry - Find External Command Table 2  
-    
-    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '97 D5 00 01 ?? ?? 01', 0x10, SEARCH_DOWN) + 0x2
-    #print('address: 0x%X' % address)
+    if address != BADADDR: 
+        while True:
+            ida.create_struct(address, 0x8, entry)
+            if ida.get_word(address) == 0x301:
+                break
+            address += 0x8
 
+    # --------------------------------------------------------------------------------------------------------
+    # sc_ext_cmd_entry - Find External Command Table 2
+    # USS1001 - 0xF99C
+    # USS1002 - 0x10424
+    
+    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '97 D5 00 01 ?? ?? 01 00 00 00 01 01', 0x10, SEARCH_DOWN) + 0x2
+    #print('address: 0x%X' % address)
+    
     while True:
         command  = ida.get_word(address)
         function = ida.get_dword(address + 0x2)
         flags    = ida.get_word(address + 0x6)
         
+        if flags == 0x161:
+            break
         ida.set_name(function, 'ext_cmd_0x%X_flags_0x%X' % (command, flags), SN_NOCHECK | SN_NOWARN | SN_FORCE)
         ida.create_struct(address, 0x8, entry)
-        if ida.get_word(address) == 0x969:
-            break
         address += 0x8
+    
+    # --------------------------------------------------------------------------------------------------------
+    # sc_ext_cmd_entry - Find External Command Table 3
+    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '00 00 ?? ?? 01 00 00 00 01 00', 0x10, SEARCH_DOWN)
+    # USS1001 - 0xF49E
+    # USS1001 - 0xF60E
+    # USS1002 - 0x1000E
+    # USS1002 - 0x1019E
+    
+    if address != BADADDR:
+        while True:
+            command  = ida.get_word(address)
+            function = ida.get_dword(address + 0x2)
+            flags    = ida.get_word(address + 0x6)
+            
+            if command == 0x5224 or flags == 0x181:
+                break
+            ida.set_name(function, 'ext_cmd_0x%X_flags_0x%X' % (command, flags), SN_NOCHECK | SN_NOWARN | SN_FORCE)
+            ida.create_struct(address, 0x8, entry)
+            address += 0x8
     
     # --------------------------------------------------------------------------------------------------------
     # renesas_cmd_entry - Find Renesas Command Table
@@ -698,12 +730,14 @@ def load_file(f, neflags, format):
     address = ida.find_binary(pa1.start_ea, pa1.end_ea, 'CF 2E 93 E9 F9 4E 28 CC', 0x10, SEARCH_DOWN)
     #print('address: 0x%X' % address)
     
-    ida.del_items(address, 0, 0x80)
+    size = len(KEYS) * 0x10
+    ida.del_items(address, 0, size)
     
-    for count, key in enumerate(KEYS):
-        ida.create_data(address + (count * 0x10), FF_BYTE, 0x10, BADNODE)
-        ida.create_struct(address + (count * 0x10), 0x10, entry)
-        ida.set_name(address + (count * 0x10), key, SN_NOCHECK | SN_NOWARN | SN_FORCE)    
+    for key in KEYS:
+        ida.create_data(address, FF_BYTE, 0x10, BADNODE)
+        ida.create_struct(address, 0x10, entry)
+        ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        address += 0x10
     
     # --------------------------------------------------------------------------------------------------------
     # SP1 Unknown Command Keys
@@ -721,39 +755,68 @@ def load_file(f, neflags, format):
     ]
     
     address = ida.find_binary(pa1.start_ea, pa1.end_ea, '80 99 6F BB C8 B4 EB A3', 0x10, SEARCH_DOWN)
-    shared = address
     #print('address: 0x%X' % address)
     
-    ida.del_items(address, 0, 0x90)
+    size = len(KEYS) * 0x10
+    ida.del_items(address, 0, size)
     
-    for count, key in enumerate(KEYS):
-        ida.create_data(address + (count * 0x10), FF_BYTE, 0x10, BADNODE)
-        ida.create_struct(address + (count * 0x10), 0x10, entry)
-        ida.set_name(address + (count * 0x10), key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+    for key in KEYS:
+        ida.create_data(address, FF_BYTE, 0x10, BADNODE)
+        ida.create_struct(address, 0x10, entry)
+        ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        address += 0x10
+    
+    #print('address: 0x%X' % address)
+    
+    # --------------------------------------------------------------------------------------------------------
+    # SP1 Unknown Command Keys 2
+    
+    unknown = ida.find_binary(address, pa1.end_ea, '80 99 6F BB C8 B4 EB A3', 0x10, SEARCH_DOWN)
+    #print('address: 0x%X' % unknown)
+    
+    if unknown != BADADDR:
+        ida.del_items(unknown, 0, size)
+    
+        for count, key in enumerate(KEYS):
+            ida.create_data(unknown + (count * 0x10), FF_BYTE, 0x10, BADNODE)
+            ida.create_struct(unknown + (count * 0x10), 0x10, entry)
+            ida.set_name(unknown + (count * 0x10), key, SN_NOCHECK | SN_NOWARN | SN_FORCE)    
     
     # --------------------------------------------------------------------------------------------------------
     # SP1 g_debug_challenge_key
-    
-    address += 0x90
-    #print('address: 0x%X' % address)
-    
+       
     ida.del_items(address, 0, 0x20)
-    
     ida.create_data(address, FF_BYTE, 0x20, BADNODE)
     ida.set_name(address, 'g_debug_challenge_key', SN_NOCHECK | SN_NOWARN | SN_FORCE)
+    address += 0x20
     
     # --------------------------------------------------------------------------------------------------------
     # SP1 jigkick_expansion
     
-    address += 0x20
-    #print('address: 0x%X' % address)
+    KEYS = [
+        'jigkick_expansion_0',
+        'jigkick_expansion_1',
+        'jigkick_expansion_2',
+        'jigkick_expansion_3',
+        'jigkick_expansion_4',
+        'jigkick_expansion_5',
+        'jigkick_expansion_6',
+        'jigkick_expansion_7',
+        'jigkick_expansion_8',
+        'jigkick_expansion_9',
+        'jigkick_expansion_A',
+        'jigkick_expansion_B',
+        'jigkick_expansion_C',
+    ]
     
-    ida.del_items(address, 0, 0xE0)
+    size = len(KEYS) * 0x10
+    ida.del_items(address, 0, size)
     
-    for key in xrange(13):
-        ida.create_data(address + (key * 0x10), FF_BYTE, 0x10, BADNODE)
-        ida.create_struct(address + (key * 0x10), 0x10, entry)
-        ida.set_name(address + (key * 0x10), 'jigkick_expansion_%X' % key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+    for key in KEYS:
+        ida.create_data(address, FF_BYTE, 0x10, BADNODE)
+        ida.create_struct(address, 0x10, entry)
+        ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        address += 0x10
     
     # --------------------------------------------------------------------------------------------------------
     # SP1 Unknown Shared Keys    
@@ -764,10 +827,11 @@ def load_file(f, neflags, format):
         'SharedKey_E',
     ]
     
-    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '%02X %02X 00 00' % (shared & 0xFF, ((shared >> 0x8) & 0xFF)), 0x10, SEARCH_DOWN) - 0xA
+    address = ida.find_binary(pa1.start_ea, pa1.end_ea, '55 55 55 00', 0x10, SEARCH_DOWN) + 0x4
     #print('address: 0x%X' % address)
     
-    ida.del_items(address, 0, 0x2A)
+    size = len(KEYS) * 0xE
+    ida.del_items(address, 0, size)
     
     for count, key in enumerate(KEYS):
         ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
@@ -778,7 +842,7 @@ def load_file(f, neflags, format):
         
         address += 0xE
     
-    ida.del_items(address, 0, 0x2A)
+    ida.del_items(address, 0, size)
     
     for count, key in enumerate(KEYS):
         ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
@@ -797,7 +861,8 @@ def load_file(f, neflags, format):
         'SharedKey_F',
     ]
     
-    ida.del_items(address, 0, 0x2C)
+    extra = len(KEYS) * 0x16
+    ida.del_items(address, 0, extra)
     
     for count, key in enumerate(KEYS):
         ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
@@ -810,7 +875,7 @@ def load_file(f, neflags, format):
         
         address += 0x16
 
-    ida.del_items(address, 0, 0x2A)
+    ida.del_items(address, 0, size)
     
     for count, key in enumerate(KEYS):
         ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
@@ -824,7 +889,7 @@ def load_file(f, neflags, format):
     # --------------------------------------------------------------------------------------------------------
     # SP1 MISC Keys/Data
     
-    MISC = [
+    KEYS = [
         'AES_KEY',
         'AES_IV',
         'XOR_KEY',
@@ -833,12 +898,14 @@ def load_file(f, neflags, format):
     address = ida.find_binary(pa1.start_ea, pa1.end_ea, 'DB D9 45 0A CC A8 54 48', 0x10, SEARCH_DOWN)
     #print('address: 0x%X' % address)
     
-    ida.del_items(address, 0, 0x30)
+    size = len(KEYS) * 0x10
+    ida.del_items(address, 0, size)
     
-    for count, key in enumerate(MISC):
-        ida.create_data(address + (count * 0x10), FF_BYTE, 0x10, BADNODE)
-        ida.create_struct(address + (count * 0x10), 0x10, entry)
-        ida.set_name(address + (count * 0x10), key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+    for key in KEYS:
+        ida.create_data(address, FF_BYTE, 0x10, BADNODE)
+        ida.create_struct(address, 0x10, entry)
+        ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        address += 0x10
     
     # --------------------------------------------------------------------------------------------------------
     # PA1 SERVICE_0x900_DATA
@@ -850,7 +917,6 @@ def load_file(f, neflags, format):
     ida.create_data(address, FF_BYTE, 0x10, BADNODE)
     ida.create_struct(address, 0x10, entry)
     ida.set_name(address, 'SERVICE_0x900_DATA', SN_NOCHECK | SN_NOWARN | SN_FORCE)
-    
     address += 0x10
     
     address = ida.find_binary(address, pa1.end_ea, '93 CE 8E BE DF 7F 69 A9', 0x10, SEARCH_DOWN)
@@ -878,13 +944,17 @@ def load_file(f, neflags, format):
     address = ida.find_binary(mirror.start_ea, mirror.end_ea, 'CF 2E 93 E9 F9 4E 28 CC', 0x10, SEARCH_DOWN)
     #print('address: 0x%X' % address)
     
-    ida.del_items(address, 0, 0x80)
-    
-    for count, key in enumerate(KEYS):
-        ida.create_data(address + (count * 0x10), FF_BYTE, 0x10, BADNODE)
-        ida.create_struct(address + (count * 0x10), 0x10, entry)
-        ida.set_name(address + (count * 0x10), key, SN_NOCHECK | SN_NOWARN | SN_FORCE) 
-    
+    if address != BADADDR:
+        
+        size = len(KEYS) * 0x10
+        ida.del_items(address, 0, size)
+        
+        for key in KEYS:
+            ida.create_data(address, FF_BYTE, 0x10, BADNODE)
+            ida.create_struct(address, 0x10, entry)
+            ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+            address += 0x10
+        
     # --------------------------------------------------------------------------------------------------------
     # Mirror Unknown Command Keys
     
@@ -901,39 +971,61 @@ def load_file(f, neflags, format):
     ]    
     
     address = ida.find_binary(mirror.start_ea, mirror.end_ea, '80 99 6F BB C8 B4 EB A3', 0x10, SEARCH_DOWN)
-    shared = address
+    
+    if address == BADADDR:
+        del KEYS[:6]
+        address = ida.find_binary(mirror.start_ea, mirror.end_ea, 'AD 2F 32 2F 42 56 C4 9D', 0x10, SEARCH_DOWN)
+    
     #print('address: 0x%X' % address)
     
-    ida.del_items(address, 0, 0x90)
+    size = len(KEYS) * 0x10
+    ida.del_items(address, 0, size)
     
-    for count, key in enumerate(KEYS):
-        ida.create_data(address + (count * 0x10), FF_BYTE, 0x10, BADNODE)
-        ida.create_struct(address + (count * 0x10), 0x10, entry)
-        ida.set_name(address + (count * 0x10), key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+    for key in KEYS:
+        ida.create_data(address, FF_BYTE, 0x10, BADNODE)
+        ida.create_struct(address, 0x10, entry)
+        ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        address += 0x10
     
     # --------------------------------------------------------------------------------------------------------
     # Mirror g_debug_challenge_key
     
-    address += 0x90
     #print('address: 0x%X' % address)
     
     ida.del_items(address, 0, 0x20)
-    
     ida.create_data(address, FF_BYTE, 0x20, BADNODE)
     ida.set_name(address, '_g_debug_challenge_key', SN_NOCHECK | SN_NOWARN | SN_FORCE)
+    address += 0x20
     
     # --------------------------------------------------------------------------------------------------------
     # Mirror jigkick_expansion
     
-    address += 0x20
+    KEYS = [
+        '_jigkick_expansion_0',
+        '_jigkick_expansion_1',
+        '_jigkick_expansion_2',
+        '_jigkick_expansion_3',
+        '_jigkick_expansion_4',
+        '_jigkick_expansion_5',
+        '_jigkick_expansion_6',
+        '_jigkick_expansion_7',
+        '_jigkick_expansion_8',
+        '_jigkick_expansion_9',
+        '_jigkick_expansion_A',
+        '_jigkick_expansion_B',
+        '_jigkick_expansion_C',
+    ]
+    
     #print('address: 0x%X' % address)
     
-    ida.del_items(address, 0, 0xE0)
+    size = len(KEYS) * 0x10
+    ida.del_items(address, 0, size)
     
-    for key in xrange(13):
-        ida.create_data(address + (key * 0x10), FF_BYTE, 0x10, BADNODE)
-        ida.create_struct(address + (key * 0x10), 0x10, entry)
-        ida.set_name(address + (key * 0x10), '_jigkick_expansion_%X' % key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+    for key in KEYS:
+        ida.create_data(address, FF_BYTE, 0x10, BADNODE)
+        ida.create_struct(address, 0x10, entry)
+        ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+        address += 0x10
     
     # --------------------------------------------------------------------------------------------------------
     # Mirror Unknown Shared Keys  
@@ -944,77 +1036,83 @@ def load_file(f, neflags, format):
         '_SharedKey_E',   
     ]    
     
-    address = ida.find_binary(mirror.start_ea, mirror.end_ea, '%02X %02X 00 00' % (shared & 0xFF, ((shared >> 0x8) & 0xFF)), 0x10, SEARCH_DOWN) - 0xA
+    address = ida.find_binary(mirror.start_ea, mirror.end_ea, '55 55 55 00', 0x10, SEARCH_DOWN)
     #print('address: 0x%X' % address)
     
-    ida.del_items(address, 0, 0x2A)
-    
-    for count, key in enumerate(KEYS):
-        ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
-        ida.create_data(address, FF_WORD, 0x2, BADNODE)
-        ida.create_data(address + 0x2, FF_DWORD, 0x4, BADNODE)
-        ida.create_data(address + 0x6, FF_DWORD, 0x4, BADNODE)
-        ida.create_data(address + 0xA, FF_DWORD, 0x4, BADNODE)
+    if address != BADADDR:
+        address += 0x4
         
-        address += 0xE
-    
-    ida.del_items(address, 0, 0x2A)
-    
-    for count, key in enumerate(KEYS):
-        ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
-        ida.create_data(address, FF_WORD, 0x2, BADNODE)
-        ida.create_data(address + 0x2, FF_DWORD, 0x4, BADNODE)
-        ida.create_data(address + 0x6, FF_DWORD, 0x4, BADNODE)
-        ida.create_data(address + 0xA, FF_DWORD, 0x4, BADNODE)
+        size = len(KEYS) * 0xE
+        ida.del_items(address, 0, size)
         
-        address += 0xE
-    
-    # --------------------------------------------------------------------------------------------------------
-    # Mirror Shared Keys        
-    
-    KEYS = [
-        '_SharedKey_B',
-        '_SharedKey_F',
-    ]
-    
-    ida.del_items(address, 0, 0x2C)
-    
-    for count, key in enumerate(KEYS):
-        ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
-        ida.create_data(address, FF_WORD, 0x2, BADNODE)
-        ida.create_data(address + 0x2,  FF_DWORD, 0x4, BADNODE)
-        ida.create_data(address + 0x6,  FF_DWORD, 0x4, BADNODE)
-        ida.create_data(address + 0xA,  FF_DWORD, 0x4, BADNODE)
-        ida.create_data(address + 0xE,  FF_DWORD, 0x4, BADNODE)
-        ida.create_data(address + 0x12, FF_DWORD, 0x4, BADNODE)
+        for count, key in enumerate(KEYS):
+            ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+            ida.create_data(address, FF_WORD, 0x2, BADNODE)
+            ida.create_data(address + 0x2, FF_DWORD, 0x4, BADNODE)
+            ida.create_data(address + 0x6, FF_DWORD, 0x4, BADNODE)
+            ida.create_data(address + 0xA, FF_DWORD, 0x4, BADNODE)
+            
+            address += 0xE
         
-        address += 0x16
-
-    ida.del_items(address, 0, 0x2A)
-    
-    for count, key in enumerate(KEYS):
-        ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
-        ida.create_data(address, FF_WORD, 0x2, BADNODE)
-        ida.create_data(address + 0x2,  FF_DWORD, 0x4, BADNODE)
-        ida.create_data(address + 0x6,  FF_DWORD, 0x4, BADNODE)
-        ida.create_data(address + 0xA,  FF_DWORD, 0x4, BADNODE)
+        ida.del_items(address, 0, size)
         
-        address += 0xE
-    
+        for count, key in enumerate(KEYS):
+            ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+            ida.create_data(address, FF_WORD, 0x2, BADNODE)
+            ida.create_data(address + 0x2, FF_DWORD, 0x4, BADNODE)
+            ida.create_data(address + 0x6, FF_DWORD, 0x4, BADNODE)
+            ida.create_data(address + 0xA, FF_DWORD, 0x4, BADNODE)
+            
+            address += 0xE
+        
+        # --------------------------------------------------------------------------------------------------------
+        # Mirror Shared Keys        
+        
+        KEYS = [
+            '_SharedKey_B',
+            '_SharedKey_F',
+        ]
+        
+        extra = len(KEYS) * 0x16
+        ida.del_items(address, 0, extra)
+        
+        for count, key in enumerate(KEYS):
+            ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+            ida.create_data(address, FF_WORD, 0x2, BADNODE)
+            ida.create_data(address + 0x2,  FF_DWORD, 0x4, BADNODE)
+            ida.create_data(address + 0x6,  FF_DWORD, 0x4, BADNODE)
+            ida.create_data(address + 0xA,  FF_DWORD, 0x4, BADNODE)
+            ida.create_data(address + 0xE,  FF_DWORD, 0x4, BADNODE)
+            ida.create_data(address + 0x12, FF_DWORD, 0x4, BADNODE)
+            
+            address += 0x16
+        
+        ida.del_items(address, 0, size)
+        
+        for count, key in enumerate(KEYS):
+            ida.set_name(address, key, SN_NOCHECK | SN_NOWARN | SN_FORCE)
+            ida.create_data(address, FF_WORD, 0x2, BADNODE)
+            ida.create_data(address + 0x2,  FF_DWORD, 0x4, BADNODE)
+            ida.create_data(address + 0x6,  FF_DWORD, 0x4, BADNODE)
+            ida.create_data(address + 0xA,  FF_DWORD, 0x4, BADNODE)
+            
+            address += 0xE
+        
     # --------------------------------------------------------------------------------------------------------
     # Mirror SERVICE_0x900_DATA
     
     address = ida.find_binary(mirror.start_ea, mirror.end_ea, '93 CE 8E BE DF 7F 69 A9', 0x10, SEARCH_DOWN)
     #print('address: 0x%X' % address)
     
-    ida.del_items(address, 0, 0x10)
-    ida.create_data(address, FF_BYTE, 0x10, BADNODE)
-    ida.create_struct(address, 0x10, entry)
-    ida.set_name(address, '_SERVICE_0x900_DATA', SN_NOCHECK | SN_NOWARN | SN_FORCE)
+    if address != BADADDR:
+        ida.del_items(address, 0, 0x10)
+        ida.create_data(address, FF_BYTE, 0x10, BADNODE)
+        ida.create_struct(address, 0x10, entry)
+        ida.set_name(address, '_SERVICE_0x900_DATA', SN_NOCHECK | SN_NOWARN | SN_FORCE)
     
     # --------------------------------------------------------------------------------------------------------
     
-
+    
     print('# Search Function Start')
     function_search(1, 'D7 61 DD')
     function_search(1, 'FF C3 31 17')
@@ -1033,6 +1131,7 @@ def load_file(f, neflags, format):
     function_search(1, '00 C7 C3 C1 FB')
     function_search(1, 'FF C7 57')
     function_search(2, '00 00 C7 C5 C1')
+    
     
     # --------------------------------------------------------------------------------------------------------
     
